@@ -1,8 +1,9 @@
 <?php
 
 /**
- * Login page
+ * Register page
  */
+
 session_start();
 require_once 'dbconnect.php';
 
@@ -15,17 +16,32 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $username = $_POST['username'];
     $password = $_POST['password'];
 
-    $user = $collection->findOne([
-        'username' => $username
-    ]);
+    // input validation
+    if (empty($username) || empty($password)) {
+        echo 'Username and password are required';
+        return;
+    }
 
-    if ($user && password_verify($password, $user['password'])) {
-        $_SESSION['user'] = iterator_to_array($user);
-        header('Location: home.php');
+    // check if username already exists
+    $user = $collection->findOne(['username' => $username]);
+    if ($user) {
+        echo 'Username already exists';
     } else {
-        echo 'Invalid username or password';
+        // insert user into database
+        $insertOneResult = $collection->insertOne([
+            'username' => $username,
+            'password' => password_hash($password, PASSWORD_DEFAULT)
+        ]);
+
+        // check if user was inserted successfully
+        if ($insertOneResult->getInsertedCount() == 1) {
+            echo 'User registered successfully';
+        } else {
+            echo 'Error registering user';
+        }
     }
 }
+
 ?>
 
 <!DOCTYPE html>
@@ -40,10 +56,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 </head>
 
 <body>
-    <!-- Twitter Login Page with Register Link -->
+    <!-- Twitter Register Page with Login Link -->
     <div class="flex justify-center items-center h-screen">
         <div class="w-1/3">
-            <h1 class="text-2xl font-bold mb-4">Login</h1>
+            <h1 class="text-2xl font-bold mb-4">Register</h1>
             <form method="POST">
                 <div class="mb-4">
                     <label for="username" class="block text-gray-700 text-sm font-bold mb-2">Username</label>
@@ -53,14 +69,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     <label for="password" class="block text-gray-700 text-sm font-bold mb-2">Password</label>
                     <input type="password" name="password" id="password" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
                 </div>
-                <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Login</button>
+                <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Register</button>
             </form>
-            <p class="mt-4">Don't have an account? <a href="register.php" class="text-blue-500">Register</a></p>
+            <p class="mt-4">Already have an account? <a href="index.php" class="text-blue-500">Login</a></p>
         </div>
     </div>
-
-
-
 </body>
-
-</html>
